@@ -9,17 +9,31 @@
 
 //// Replace this comment with your code.
 
-@16
-M=1
-
-@SCREEN
+@R2
+M=0
+@R0
 D=M
-@reference
+@END
+D; JEQ
+@R1
+D=M
+@END
+D; JEQ
+@n
 M=D
 
-@reference
+(MULTIPLY)
+@R0
 D=M
-A=M
-M=1
+@R2
+M=D+M
+@n
+M=M-1
+D=M
+@MULTIPLY
+D;JGT
 
+(END)
+@END
+0;JMP
 
