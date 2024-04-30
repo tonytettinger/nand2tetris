@@ -6,7 +6,7 @@ class Parser:
         self.arg1 = None
         self.arg2 = None
         self.command_type = None
-        self.valid_commands = ['push', 'add']
+        self.valid_commands = ['push', 'add', 'pop', 'sub']
 
     def has_more_lines(self):
         if self.file.closed:
@@ -21,27 +21,28 @@ class Parser:
 
     def advance(self):
         if self.has_more_lines():
-            if self.current_line != '\n':
-                try:
-                    words_of_line = self.current_line.split()
-                    command = words_of_line[0]
-                    if command not in self.valid_commands:
-                        print('Invalid command')
-                        self.command_type = None
-                        raise ValueError
-                    else:
-                        self.command_type = command
-                except ValueError:
-                    print('An error occurred: invalid command')
-                try:
-                    if command != 'add':
-                        self.arg1 = words_of_line[1]
-                        self.arg2 = words_of_line[2]
-                    else:
-                        self.arg1 = None
-                        self.arg2 = None
-                except IndexError:
-                    print('Missing arguments')
+            while self.current_line == '\n' or self.current_line.split()[0] == '//':
+                self.has_more_lines()
+            try:
+                words_of_line = self.current_line.split()
+                command = words_of_line[0]
+                if command not in self.valid_commands:
+                    self.command_type = None
+                    raise ValueError
+                else:
+                    self.command_type = command
+                    return True
+            except ValueError:
+                print('An error occurred: invalid command: ', command)
+            try:
+                if command != 'add':
+                    self.arg1 = words_of_line[1]
+                    self.arg2 = words_of_line[2]
+                else:
+                    self.arg1 = None
+                    self.arg2 = None
+            except IndexError:
+                print('Missing arguments')
 
     def arg1(self):
         return self.arg1
