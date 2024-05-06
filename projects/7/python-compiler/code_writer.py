@@ -92,8 +92,8 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@StaticTest.{self.static_counter}'
-                code_to_write = self.get_push_code_line(target, '0')
+                target = f'@StaticTest.{arg2}'
+                code_to_write = [target, 'D=M', self.push_value_of_d_to_stack_pointer]
             else:
                 code_to_write = self.get_push_code_line(arg1, arg2)
         elif operation == 'pop':
@@ -109,8 +109,8 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@StaticTest.{self.static_counter}'
-                code_to_write = self.get_pop_code_line(target, arg2)
+                target = f'@StaticTest.{arg2}'
+                code_to_write = [self.pop_stack_pointer_value_to_d, target, 'M=D']
                 self.static_counter += 1
                 if self.static_counter >= 240:
                     raise Exception('More than 240 static variables')
