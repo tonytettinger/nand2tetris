@@ -66,13 +66,24 @@ class CodeWriter:
         self.file_writer(code_to_write)
         return
 
+    def pointer_target(self, argument_operation_number):
+        target = 'this' if argument_operation_number == '0' else 'that'
+        return target
+
     def write_push_pop(self, operation, arg1, arg2):
         code_to_write = []
         if operation == 'push':
-            code_to_write = self.get_push_code_line(arg1, arg2)
+            if arg1 == 'pointer':
+                target = self.pointer_target(arg2)
+                code_to_write = self.get_push_code_line(target, '0')
+            else:
+                code_to_write = self.get_push_code_line(arg1, arg2)
         elif operation == 'pop':
             if arg1 == 'temp':
                 code_to_write = self.get_pop_temp(arg2)
+            elif arg1 == 'pointer':
+                target = self.pointer_target(arg2)
+                code_to_write = self.get_pop_code_line(target, '0')
             else:
                 code_to_write = self.get_pop_code_line(arg1, arg2)
 
