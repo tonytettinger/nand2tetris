@@ -31,16 +31,16 @@ class Parser:
                     raise ValueError
                 else:
                     self.command_type = command
-                    return True
             except ValueError:
                 print('An error occurred: invalid command: ', command)
             try:
-                if command != 'add':
+                if command == 'push' or command == 'pop':
                     self.arg1 = words_of_line[1]
                     self.arg2 = words_of_line[2]
                 else:
                     self.arg1 = None
                     self.arg2 = None
+                return True
             except IndexError:
                 print('Missing arguments')
 
