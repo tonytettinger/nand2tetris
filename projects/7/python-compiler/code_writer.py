@@ -12,13 +12,13 @@ class CodeWriter:
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
-        self.get_top_value_from_stack = '@SP\nA=M-1'
         self.set_pointer_up = '@SP\nM=M+1'
         self.set_pointer_down = '@SP\nM=M-1'
-        self.push_value_of_d_to_stack_pointer = '@SP\nA=M\nM=D\n@SP\nM=M+1'
+        self.push_value_of_d_to_stack = '@SP\nA=M\nM=D\n@SP\nM=M+1'
         self.set_d_to_value_at_pointer = 'A=M\nD=M'
         self.pop_stack_pointer_value_to_d = '@SP\nM=M-1\n@SP\nA=M\nD=M'
-        self.address_dict = {'local': '@LCL', 'that': '@THAT', 'argument': '@ARG', 'this': '@THIS', '3': '@3', '4': '@4'}
+        self.address_dict = {'local': '@LCL', 'that': '@THAT', 'argument': '@ARG', 'this': '@THIS', '3': '@3',
+                             '4': '@4'}
         self.temp_dict = {
             '0': '@5',
             '1': '@6',
@@ -30,6 +30,7 @@ class CodeWriter:
             '7': '@12'
         }
         self.static_counter = 0
+        self.eq_loop_counter = 0
         self.current_this = 3
         self.current_that = 4
 
@@ -41,14 +42,14 @@ class CodeWriter:
 
     def get_push_code_line(self, arg1, arg2):
         if arg1 == 'temp':
-            return [self.temp_dict[arg2], 'D=M', self.push_value_of_d_to_stack_pointer]
+            return [self.temp_dict[arg2], 'D=M', self.push_value_of_d_to_stack]
         if arg1 == 'constant':
-            return ['@' + arg2, 'D=A', self.push_value_of_d_to_stack_pointer]
+            return ['@' + arg2, 'D=A', self.push_value_of_d_to_stack]
         if 'Static' in arg1:
-            return [arg1, 'D=A', self.push_value_of_d_to_stack_pointer]
+            return [arg1, 'D=A', self.push_value_of_d_to_stack]
         else:
             r_13_to_final_address = ['@' + arg2, 'D=A', self.address_dict[arg1], 'A=M', 'D=D+A', '@R13', 'M=D']
-            set_final_address_to_arg2 = ['@R13', self.set_d_to_value_at_pointer, self.push_value_of_d_to_stack_pointer]
+            set_final_address_to_arg2 = ['@R13', self.set_d_to_value_at_pointer, self.push_value_of_d_to_stack]
             return r_13_to_final_address + set_final_address_to_arg2
 
     def get_pop_temp(self, arg2):
@@ -67,12 +68,15 @@ class CodeWriter:
         code_to_write = []
         if operation == 'add':
             code_to_write = [
-                self.get_top_value_from_stack, 'D=M', self.set_pointer_down,
+                self.pop_stack_pointer_value_to_d,
                 'A=M-1', 'M=M+D'
             ]
         elif operation == 'sub':
-            code_to_write = [self.get_top_value_from_stack, 'D=M', self.set_pointer_down, 'A=M-1', 'M=M-D']
-
+            code_to_write = [self.pop_stack_pointer_value_to_d, 'A=M-1', 'M=M-D']
+        elif operation == 'eq':
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=D-M', f'@EQ{self.eq_loop_counter}', 'D;JEQ', self.SP, 'M=M-1', 'A=M', 'M=-1', f'@EQ{self.eq_loop_counter}END',
+                             '0;JMP', f'(EQ{self.eq_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=0', f'(EQ{self.eq_loop_counter}END)']
+            self.eq_loop_counter+=1
         self.file_writer(code_to_write)
         return
 
@@ -85,14 +89,14 @@ class CodeWriter:
         if operation == 'push':
             if arg1 == 'pointer':
                 if arg2 == '0':
-                    code_to_write = ['@3', 'D=M', self.push_value_of_d_to_stack_pointer]
+                    code_to_write = ['@3', 'D=M', self.push_value_of_d_to_stack]
                 elif arg2 == '1':
-                    code_to_write = ['@4', 'D=M', self.push_value_of_d_to_stack_pointer]
+                    code_to_write = ['@4', 'D=M', self.push_value_of_d_to_stack]
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
                 target = f'@{self.file_name}.{arg2}'
-                code_to_write = [target, 'D=M', self.push_value_of_d_to_stack_pointer]
+                code_to_write = [target, 'D=M', self.push_value_of_d_to_stack]
             else:
                 code_to_write = self.get_push_code_line(arg1, arg2)
         elif operation == 'pop':
