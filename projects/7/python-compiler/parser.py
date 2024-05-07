@@ -1,12 +1,12 @@
 class Parser:
     def __init__(self, file_name):
-        file = open(file_name)
+        file = open(file_name + '.vm')
         self.file = file
         self.current_line = None
         self.arg1 = None
         self.arg2 = None
         self.command_type = None
-        self.valid_commands = ['push', 'add', 'pop', 'sub']
+        self.valid_commands = ['push', 'add', 'pop', 'sub', 'lt', 'gt', 'eq', 'and', 'not', 'or']
 
     def has_more_lines(self):
         if self.file.closed:

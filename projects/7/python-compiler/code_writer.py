@@ -5,9 +5,10 @@ def reset_file(file_name):
 
 class CodeWriter:
 
-    def __init__(self, output_file_name):
-        self.output_file_name = output_file_name
-        reset_file(output_file_name)
+    def __init__(self, file_name):
+        self.file_name = file_name
+        self.output_file_name = file_name + '.asm'
+        reset_file(file_name)
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
@@ -39,8 +40,6 @@ class CodeWriter:
                 file.write("\n")
 
     def get_push_code_line(self, arg1, arg2):
-        if arg1 == 'that':
-            this_base_address = '@' + str(self.current_that)
         if arg1 == 'temp':
             return [self.temp_dict[arg2], 'D=M', self.push_value_of_d_to_stack_pointer]
         if arg1 == 'constant':
@@ -92,7 +91,7 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@StaticTest.{arg2}'
+                target = f'@{self.file_name}.{arg2}'
                 code_to_write = [target, 'D=M', self.push_value_of_d_to_stack_pointer]
             else:
                 code_to_write = self.get_push_code_line(arg1, arg2)
@@ -109,7 +108,7 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@StaticTest.{arg2}'
+                target = f'@{self.file_name}.{arg2}'
                 code_to_write = [self.pop_stack_pointer_value_to_d, target, 'M=D']
                 self.static_counter += 1
                 if self.static_counter >= 240:
