@@ -32,6 +32,7 @@ class CodeWriter:
         self.static_counter = 0
         self.eq_loop_counter = 0
         self.lt_loop_counter = 0
+        self.gt_loop_counter = 0
         self.current_this = 3
         self.current_that = 4
 
@@ -82,6 +83,15 @@ class CodeWriter:
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D', f'@LT{self.lt_loop_counter}', 'D;JLT', self.SP, 'A=M-1', 'A=M', 'M=0', f'@LT{self.lt_loop_counter}END',
                              '0;JMP', f'(LT{self.lt_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=-1', f'(LT{self.lt_loop_counter}END)', self.set_pointer_up]
             self.lt_loop_counter+=1
+        elif operation == 'gt':
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D',
+                             f'@GT{self.gt_loop_counter}', 'D;JGT', self.SP, 'A=M-1', 'A=M', 'M=0',
+                             f'@GT{self.gt_loop_counter}END',
+                             '0;JMP', f'(GT{self.gt_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=-1',
+                             f'(GT{self.gt_loop_counter}END)', self.set_pointer_up]
+            self.gt_loop_counter += 1
+        elif operation == 'neg':
+            code_to_write = [self.SP, 'A=M', 'M=-M']
         self.file_writer(code_to_write)
         return
 
