@@ -1,14 +1,12 @@
-def reset_file(file_name):
-    with open(file_name, "w"):
-        pass
+
 
 
 class CodeWriter:
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, output_file):
         self.file_name = file_name
-        self.output_file_name = file_name + '.asm'
-        reset_file(file_name)
+        self.output_file = output_file
+        self.reset_file()
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
@@ -36,8 +34,12 @@ class CodeWriter:
         self.current_this = 3
         self.current_that = 4
 
+    def reset_file(self):
+        with open(self.file_name, "w"):
+            pass
+
     def file_writer(self, code_to_write):
-        with open(self.output_file_name, "a") as file:
+        with open(self.output_file, "a") as file:
             for code in code_to_write:
                 file.write(code)
                 file.write("\n")

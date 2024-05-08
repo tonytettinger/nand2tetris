@@ -1,6 +1,6 @@
 class Parser:
     def __init__(self, file_name):
-        file = open(file_name + '.vm')
+        file = open(file_name)
         self.file = file
         self.current_line = None
         self.arg1 = None
