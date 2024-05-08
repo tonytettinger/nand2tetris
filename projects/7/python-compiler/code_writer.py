@@ -1,12 +1,14 @@
-
+def reset_file(file_name):
+    with open(file_name, "w"):
+        pass
 
 
 class CodeWriter:
 
-    def __init__(self, file_name, output_file):
+    def __init__(self, file_name):
         self.file_name = file_name
-        self.output_file = output_file
-        self.reset_file()
+        self.output_file = file_name + '.asm'
+        reset_file(file_name)
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
@@ -33,10 +35,6 @@ class CodeWriter:
         self.gt_loop_counter = 0
         self.current_this = 3
         self.current_that = 4
-
-    def reset_file(self):
-        with open(self.file_name, "w"):
-            pass
 
     def file_writer(self, code_to_write):
         with open(self.output_file, "a") as file:
@@ -118,7 +116,11 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@{self.file_name}.{arg2}'
+                cleaned_name = self.file_name.replace("/", "")
+                cleaned_name = cleaned_name.replace("\\", "")
+                partioned = cleaned_name.partition("StaticTest")
+                final = partioned[1] + partioned[2]
+                target = f'@{final}.{arg2}'
                 code_to_write = [target, 'D=M', self.push_value_of_d_to_stack]
             else:
                 code_to_write = self.get_push_code_line(arg1, arg2)
@@ -135,7 +137,11 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@{self.file_name}.{arg2}'
+                cleaned_name = self.file_name.replace("/", "")
+                cleaned_name = cleaned_name.replace("\\", "")
+                partioned = cleaned_name.partition("StaticTest")
+                final = partioned[1]+partioned[2]
+                target = f'@{final}.{arg2}'
                 code_to_write = [self.pop_stack_pointer_value_to_d, target, 'M=D']
                 self.static_counter += 1
                 if self.static_counter >= 240:
