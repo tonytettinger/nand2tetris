@@ -70,28 +70,34 @@ class CodeWriter:
         code_to_write = []
         if operation == 'add':
             code_to_write = [
-                self.pop_stack_pointer_value_to_d,
+                self.pop_stack_pointer_value_to_d, self.SP,
                 'A=M-1', 'M=M+D'
             ]
         elif operation == 'sub':
-            code_to_write = [self.pop_stack_pointer_value_to_d, 'A=M-1', 'M=M-D']
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=M-D']
         elif operation == 'eq':
-            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=D-M', f'@EQ{self.eq_loop_counter}', 'D;JEQ', self.SP, 'M=M-1', 'A=M', 'M=-1', f'@EQ{self.eq_loop_counter}END',
-                             '0;JMP', f'(EQ{self.eq_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=0', f'(EQ{self.eq_loop_counter}END)']
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=D-M', f'@EQ{self.eq_loop_counter}', 'D;JEQ', self.SP, 'A=M', 'M=0', f'@EQ{self.eq_loop_counter}END',
+                             '0;JMP', f'(EQ{self.eq_loop_counter})', self.SP, 'A=M', 'M=-1', f'(EQ{self.eq_loop_counter}END)', self.set_pointer_up]
             self.eq_loop_counter+=1
         elif operation == 'lt':
-            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D', f'@LT{self.lt_loop_counter}', 'D;JLT', self.SP, 'A=M-1', 'A=M', 'M=0', f'@LT{self.lt_loop_counter}END',
-                             '0;JMP', f'(LT{self.lt_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=-1', f'(LT{self.lt_loop_counter}END)', self.set_pointer_up]
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D', f'@LT{self.lt_loop_counter}', 'D;JLT', self.SP, 'A=M', 'M=0', f'@LT{self.lt_loop_counter}END',
+                             '0;JMP', f'(LT{self.lt_loop_counter})', self.SP, 'A=M', 'M=-1', f'(LT{self.lt_loop_counter}END)', self.set_pointer_up]
             self.lt_loop_counter+=1
         elif operation == 'gt':
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D',
-                             f'@GT{self.gt_loop_counter}', 'D;JGT', self.SP, 'A=M-1', 'A=M', 'M=0',
+                             f'@GT{self.gt_loop_counter}', 'D;JGT', self.SP, 'A=M', 'M=0',
                              f'@GT{self.gt_loop_counter}END',
-                             '0;JMP', f'(GT{self.gt_loop_counter})', self.SP, 'M=M-1', 'A=M', 'M=-1',
+                             '0;JMP', f'(GT{self.gt_loop_counter})', self.SP, 'A=M', 'M=-1',
                              f'(GT{self.gt_loop_counter}END)', self.set_pointer_up]
             self.gt_loop_counter += 1
         elif operation == 'neg':
-            code_to_write = [self.SP, 'A=M', 'M=-M']
+            code_to_write = [self.SP, 'A=M-1', 'M=-M']
+        elif operation == 'not':
+            code_to_write = [self.SP, 'A=M-1', 'M=!M']
+        elif operation == 'or':
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D | M']
+        elif operation == 'and':
+            code_to_write = ['//Starting AND block',self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D & M']
         self.file_writer(code_to_write)
         return
 
