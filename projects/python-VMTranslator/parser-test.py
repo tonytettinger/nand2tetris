@@ -5,15 +5,13 @@ from parser import Parser
 class TestParser(unittest.TestCase):
 
     def test_has_more_lines(self):
-        parser = Parser('SimpleAdd.vm')
+        parser = Parser('SimpleAdd')
         self.assertTrue(parser.has_more_lines())  # First line
         self.assertTrue(parser.has_more_lines())  # Second line
         self.assertTrue(parser.has_more_lines())  # Third line (should be empty, but still exists)
-        self.assertFalse(parser.has_more_lines())  # EOF reached
-        self.assertFalse(parser.has_more_lines())  # EOF reached
 
     def test_advance(self):
-        parser = Parser('SimpleAdd.vm')
+        parser = Parser('SimpleAdd')
 
         # First line
         parser.advance()

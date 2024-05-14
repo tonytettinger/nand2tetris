@@ -5,10 +5,10 @@ def reset_file(file_name):
 
 class CodeWriter:
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, output_file_path):
         self.file_name = file_name
-        self.output_file = file_name + '.asm'
-        reset_file(file_name)
+        self.output_file = output_file_path
+        reset_file(self.output_file)
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
@@ -116,11 +116,7 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                cleaned_name = self.file_name.replace("/", "")
-                cleaned_name = cleaned_name.replace("\\", "")
-                partioned = cleaned_name.partition("StaticTest")
-                final = partioned[1] + partioned[2]
-                target = f'@{final}.{arg2}'
+                target = f'@{arg1.capitalize()}.{arg2}'
                 code_to_write = [target, 'D=M', self.push_value_of_d_to_stack]
             else:
                 code_to_write = self.get_push_code_line(arg1, arg2)
@@ -137,11 +133,7 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                cleaned_name = self.file_name.replace("/", "")
-                cleaned_name = cleaned_name.replace("\\", "")
-                partioned = cleaned_name.partition("StaticTest")
-                final = partioned[1]+partioned[2]
-                target = f'@{final}.{arg2}'
+                target = f'@{arg1.capitalize()}.{arg2}'
                 code_to_write = [self.pop_stack_pointer_value_to_d, target, 'M=D']
                 self.static_counter += 1
                 if self.static_counter >= 240:
