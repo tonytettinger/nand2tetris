@@ -29,6 +29,8 @@ class CodeWriter:
             '6': '@11',
             '7': '@12'
         }
+        self.arithmetic_operations = ['add', 'sub']
+        self.logical_operations = ['gt', 'eq', 'lt', 'neg', 'not', 'or', 'and']
         self.static_counter = 0
         self.eq_loop_counter = 0
         self.lt_loop_counter = 0
@@ -75,14 +77,25 @@ class CodeWriter:
             ]
         elif operation == 'sub':
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=M-D']
-        elif operation == 'eq':
-            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=D-M', f'@EQ{self.eq_loop_counter}', 'D;JEQ', self.SP, 'A=M', 'M=0', f'@EQ{self.eq_loop_counter}END',
-                             '0;JMP', f'(EQ{self.eq_loop_counter})', self.SP, 'A=M', 'M=-1', f'(EQ{self.eq_loop_counter}END)', self.set_pointer_up]
-            self.eq_loop_counter+=1
+        self.file_writer(code_to_write)
+        return
+
+    def write_logical_operations(self, operation):
+        code_to_write = []
+        if operation == 'eq':
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=D-M',
+                             f'@EQ{self.eq_loop_counter}', 'D;JEQ', self.SP, 'A=M', 'M=0',
+                             f'@EQ{self.eq_loop_counter}END',
+                             '0;JMP', f'(EQ{self.eq_loop_counter})', self.SP, 'A=M', 'M=-1',
+                             f'(EQ{self.eq_loop_counter}END)', self.set_pointer_up]
+            self.eq_loop_counter += 1
         elif operation == 'lt':
-            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D', f'@LT{self.lt_loop_counter}', 'D;JLT', self.SP, 'A=M', 'M=0', f'@LT{self.lt_loop_counter}END',
-                             '0;JMP', f'(LT{self.lt_loop_counter})', self.SP, 'A=M', 'M=-1', f'(LT{self.lt_loop_counter}END)', self.set_pointer_up]
-            self.lt_loop_counter+=1
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D',
+                             f'@LT{self.lt_loop_counter}', 'D;JLT', self.SP, 'A=M', 'M=0',
+                             f'@LT{self.lt_loop_counter}END',
+                             '0;JMP', f'(LT{self.lt_loop_counter})', self.SP, 'A=M', 'M=-1',
+                             f'(LT{self.lt_loop_counter}END)', self.set_pointer_up]
+            self.lt_loop_counter += 1
         elif operation == 'gt':
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'M=M-1', 'A=M', 'D=M-D',
                              f'@GT{self.gt_loop_counter}', 'D;JGT', self.SP, 'A=M', 'M=0',
@@ -97,9 +110,8 @@ class CodeWriter:
         elif operation == 'or':
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D | M']
         elif operation == 'and':
-            code_to_write = ['//Starting AND block',self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D & M']
+            code_to_write = ['//Starting AND block', self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D & M']
         self.file_writer(code_to_write)
-        return
 
     def pointer_target(self, argument_operation_number):
         target = 'this' if argument_operation_number == '0' else 'that'
@@ -143,8 +155,29 @@ class CodeWriter:
 
         self.file_writer(code_to_write)
 
+    def create_label(self, label):
+        return ["(" + label + ")"]
+
+    def create_if_goto_label(self, label):
+        label_address = '@' + str(label)
+        code_to_write = [self.pop_stack_pointer_value_to_d, '@1', 'D=D-A', label_address, 'D;JGE']
+        return code_to_write
+
+    def write_program_flow(self, operation, arg):
+        code_to_write = []
+        if operation == 'label':
+            code_to_write = self.create_label(arg)
+        elif operation == 'if-goto':
+            code_to_write = self.create_if_goto_label(arg)
+        self.file_writer(code_to_write)
+
     def write_code_line(self, operation, arg1=None, arg2=None):
-        if arg1 is None or arg2 is None:
+        print('OPERATION:', operation, 'arg', arg1, 'arg2', arg2)
+        if operation in self.arithmetic_operations:
             self.write_arithmetic(operation)
+        elif operation in self.logical_operations:
+            self.write_logical_operations(operation)
         elif operation == 'push' or operation == 'pop':
             self.write_push_pop(operation, arg1, arg2)
+        elif operation == 'label' or operation == 'if-goto':
+            self.write_program_flow(operation, arg1)
