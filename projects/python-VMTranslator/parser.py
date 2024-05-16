@@ -40,7 +40,7 @@ class Parser:
                     self.arg1 = words_of_line[1]
                     self.arg2 = words_of_line[2]
 
-                elif command == 'if-goto' or command == 'label':
+                elif command == 'if-goto' or command == 'label' or command == 'goto':
                     self.arg1 = words_of_line[1]
 
                 return True

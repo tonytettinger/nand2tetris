@@ -158,9 +158,14 @@ class CodeWriter:
     def create_label(self, label):
         return ["(" + label + ")"]
 
-    def create_if_goto_label(self, label):
+    def jump_conditional_if_goto_label(self, label):
         label_address = '@' + str(label)
         code_to_write = [self.pop_stack_pointer_value_to_d, '@1', 'D=D-A', label_address, 'D;JGE']
+        return code_to_write
+
+    def jump_goto_label(self, label):
+        label_address = '@' + str(label)
+        code_to_write = [label_address, '0;JMP']
         return code_to_write
 
     def write_program_flow(self, operation, arg):
@@ -168,7 +173,9 @@ class CodeWriter:
         if operation == 'label':
             code_to_write = self.create_label(arg)
         elif operation == 'if-goto':
-            code_to_write = self.create_if_goto_label(arg)
+            code_to_write = self.jump_conditional_if_goto_label(arg)
+        elif operation == 'goto':
+            code_to_write = self.jump_goto_label(arg)
         self.file_writer(code_to_write)
 
     def write_code_line(self, operation, arg1=None, arg2=None):
@@ -179,5 +186,5 @@ class CodeWriter:
             self.write_logical_operations(operation)
         elif operation == 'push' or operation == 'pop':
             self.write_push_pop(operation, arg1, arg2)
-        elif operation == 'label' or operation == 'if-goto':
+        elif operation == 'label' or operation == 'if-goto' or operation == 'goto':
             self.write_program_flow(operation, arg1)
