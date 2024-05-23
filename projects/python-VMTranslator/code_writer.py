@@ -213,24 +213,21 @@ class CodeWriter:
         return create_vars_code
 
     def create_return_function(self):
-        set_temp_to_frame_from_LCL = ['@LCL', 'D=A', '@TEMP', 'M=D']
-        # put return address into a temp var
-        select_frame_minus_5 = ['@TEMP', 'D=A', '@5', 'D=D-A', 'A=D', 'D=M']
-        put_return_address_temp_2 = ['@TEMP', 'A=A+1', 'M=D']
+        set_r13_to_frame_from_LCL = ['@LCL', 'D=M', '@R13', 'M=D']
+        # put return address into a temp var (frame -5)
+        ret_address = ['@5', 'D=D-A', 'A=D', 'D=M', '@R14', 'M=D']
         # reposition return arg
         reposition_return_val = [self.pop_stack_pointer_value_to_d, '@ARG', 'A=M', 'M=D']
         # reposition SP
         reposition_sp = ['//Return function', '@ARG', 'D=M', self.SP, 'M=D+1']
         # restore caller state
-        restore_that = ['@TEMP', 'D=A', '@1', 'D=D-A', '@THAT', 'A=M', 'M=D']
-        restore_this = ['@TEMP', 'D=A', '@2', 'D=D-A', '@THIS', 'A=M', 'M=D']
-        restore_arg = ['@TEMP', 'D=A', '@3', 'D=D-A', '@ARG', 'A=M', 'M=D']
-        restore_lcl = ['@TEMP', 'D=A', '@4', 'D=D-A', '@LCL', 'A=M', 'M=D']
-        goto_saved_label = ['@TEMP', 'A=A+1', 'D=A', self.SP, 'A=D']
-        code_to_write = (
-                    set_temp_to_frame_from_LCL + select_frame_minus_5 + put_return_address_temp_2 + reposition_return_val
-                    + reposition_sp + restore_that + restore_this + restore_arg + restore_lcl + goto_saved_label)
-        self.file_writer(reposition_return_val + reposition_sp)
+        restore_that = ['@R13', 'D=M', '@1', 'D=D-A', 'A=D', 'D=M', '@THAT', 'M=D']
+        restore_this = ['@R13', 'D=M', '@2', 'D=D-A', 'A=D', 'D=M', '@THIS', 'M=D']
+        restore_arg = ['@R13', 'D=M', '@3', 'D=D-A', 'A=D', 'D=M', '@ARG', 'M=D']
+        restore_lcl = ['@R13', 'D=M', '@4', 'D=D-A', 'A=D', 'D=M', '@LCL', 'M=D']
+        goto_saved_label = ['@R14', '0;JMP']
+        self.file_writer(set_r13_to_frame_from_LCL + ret_address + reposition_return_val + reposition_sp +
+                         restore_that + restore_this + restore_arg + restore_lcl)
 
     def create_function(self, fn_name, num_local_args):
         code_to_write = self.create_function_label(fn_name) + self.create_n_vars(int(num_local_args))
