@@ -6,7 +6,7 @@ class Parser:
         self.arg1 = None
         self.arg2 = None
         self.command_type = None
-        self.valid_commands = ['push', 'add', 'pop', 'sub', 'lt', 'gt', 'eq', 'and', 'not', 'or', 'neg', 'label','if-goto', 'goto']
+        self.valid_commands = ['push', 'add', 'pop', 'sub', 'lt', 'gt', 'eq', 'and', 'not', 'or', 'neg', 'label','if-goto', 'goto', 'return', 'function']
 
     def has_more_lines(self):
         if self.file.closed:
@@ -36,16 +36,14 @@ class Parser:
             try:
                 self.arg1 = None
                 self.arg2 = None
-                if command == 'push' or command == 'pop':
+                if command == 'push' or command == 'pop' or command == 'function':
                     self.arg1 = words_of_line[1]
                     self.arg2 = words_of_line[2]
-
                 elif command == 'if-goto' or command == 'label' or command == 'goto':
                     self.arg1 = words_of_line[1]
-
                 return True
             except IndexError:
-                print('Missing arguments')
+                print('Missing arguments', words_of_line)
 
     def arg1(self):
         return self.arg1
