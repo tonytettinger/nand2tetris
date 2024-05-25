@@ -225,9 +225,9 @@ class CodeWriter:
         restore_this = ['@R13', 'D=M', '@2', 'D=D-A', 'A=D', 'D=M', '@THIS', 'M=D']
         restore_arg = ['@R13', 'D=M', '@3', 'D=D-A', 'A=D', 'D=M', '@ARG', 'M=D']
         restore_lcl = ['@R13', 'D=M', '@4', 'D=D-A', 'A=D', 'D=M', '@LCL', 'M=D']
-        goto_saved_label = ['@R14', '0;JMP']
+        goto_saved_label = ['@R14', 'A=M', '0;JMP']
         self.file_writer(set_r13_to_frame_from_LCL + ret_address + reposition_return_val + reposition_sp +
-                         restore_that + restore_this + restore_arg + restore_lcl)
+                         restore_that + restore_this + restore_arg + restore_lcl + goto_saved_label)
 
     def create_function(self, fn_name, num_local_args):
         code_to_write = self.create_function_label(fn_name) + self.create_n_vars(int(num_local_args))
