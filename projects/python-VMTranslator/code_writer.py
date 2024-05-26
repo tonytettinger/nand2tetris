@@ -9,7 +9,6 @@ class CodeWriter:
         self.file_name = file_name
         self.capitalized_file_name = file_name.capitalize()
         self.output_file = output_file_path
-        reset_file(self.output_file)
         self.SP = '@SP'
         self.new_line = '\n'
         # Below the current stack pointer
@@ -40,7 +39,12 @@ class CodeWriter:
         self.current_that = 4
         self.function_name_counter_dict = {}
 
+    def clean_output_file(self):
+        print('cleaing', self.output_file)
+        reset_file(self.output_file)
+
     def file_writer(self, code_to_write):
+        print('output file is', self.output_file)
         with open(self.output_file, "a") as file:
             for code in code_to_write:
                 file.write(code)
@@ -181,9 +185,12 @@ class CodeWriter:
     def create_function_name(self, function_name):
         return self.capitalized_file_name + "." + function_name
 
-    def create_function_label_string(self, fn_name):
+    def create_function_return_label_string(self, fn_name):
         return "(" + self.capitalized_file_name + '.' + fn_name + ".$ret." + str(
             self.function_name_counter(fn_name)) + ")"
+
+    def create_function_entry_label_string(self, fn_name):
+        return "(" + self.capitalized_file_name + '.' + fn_name + ")"
 
     def create_function_return_to_label(self, fn_name):
         print('counter dict', self.function_name_counter_dict)
@@ -192,7 +199,7 @@ class CodeWriter:
             self.function_name_counter_dict[dict_key])
 
     def create_function_label(self, fn_name):
-        return [self.create_function_label_string(fn_name)]
+        return [self.create_function_entry_label_string(fn_name)]
 
     def write_program_flow(self, operation, arg):
         code_to_write = []
@@ -233,6 +240,9 @@ class CodeWriter:
         code_to_write = self.create_function_label(fn_name) + self.create_n_vars(int(num_local_args))
         self.file_writer(code_to_write)
 
+    def create_call(self,arg1,arg2):
+        return None
+
     def write_code_line(self, operation, arg1=None, arg2=None):
         print('OPERATION:', operation, 'arg', arg1, 'arg2', arg2)
         if operation in self.arithmetic_operations:
@@ -247,3 +257,6 @@ class CodeWriter:
             self.create_function(arg1, arg2)
         elif operation == 'return':
             self.create_return_function()
+        elif operation == 'call':
+            print('WRITING CALL', arg1, arg2)
+            self.create_call(arg1,arg2)
