@@ -38,6 +38,7 @@ class CodeWriter:
         self.current_this = 3
         self.current_that = 4
         self.function_name_counter_dict = {}
+        self.current_function = None
 
     def clean_output_file(self):
         print('cleaing', self.output_file)
@@ -68,10 +69,9 @@ class CodeWriter:
         if 'Static' in arg1:
             return [arg1, 'D=A', self.push_value_of_d_to_stack]
         else:
-            print('PUSH ELSE', arg1, 'and', arg2)
             r_13_to_final_address = ['@' + arg2, 'D=A', self.address_dict[arg1], 'A=M', 'D=D+A', '@R13', 'M=D']
             set_final_address_to_arg2 = ['@R13', self.set_d_to_value_at_pointer, self.push_value_of_d_to_stack]
-            return r_13_to_final_address + set_final_address_to_arg2
+            return ['//start command push' +arg1 +' with argument ' + arg2 ] + r_13_to_final_address + set_final_address_to_arg2
 
     def get_pop_temp(self, arg2):
         return [self.pop_stack_pointer_value_to_d, self.temp_dict[arg2], 'M=D']
@@ -162,10 +162,13 @@ class CodeWriter:
         self.file_writer(code_to_write)
 
     def create_label(self, label):
-        return ["(" + label + ")"]
+        if self.current_function != None:
+            return self.current_function + "$" + label
+        else:
+            return label
 
     def jump_conditional_if_goto_label(self, label):
-        label_address = '@' + str(label)
+        label_address = '@' + self.create_label(label)
         code_to_write = [self.pop_stack_pointer_value_to_d, '@1', 'D=D-A', label_address, 'D;JGE']
         return code_to_write
 
@@ -175,28 +178,19 @@ class CodeWriter:
         return code_to_write
 
     def function_name_counter(self, function_name):
-        current_function_name = self.create_function_name(function_name)
-        if current_function_name not in self.function_name_counter_dict:
-            self.function_name_counter_dict[current_function_name] = 0
+        if function_name not in self.function_name_counter_dict:
+            self.function_name_counter_dict[function_name] = 0
         else:
-            self.function_name_counter_dict[current_function_name] += 1
-        return self.function_name_counter_dict[current_function_name]
-
-    def create_function_name(self, function_name):
-        return self.capitalized_file_name + "." + function_name
-
-    def create_function_return_label_string(self, fn_name):
-        return "(" + self.capitalized_file_name + '.' + fn_name + ".$ret." + str(
-            self.function_name_counter(fn_name)) + ")"
+            self.function_name_counter_dict[function_name] += 1
+        return self.function_name_counter_dict[function_name]
 
     def create_function_entry_label_string(self, fn_name):
-        return "(" + self.capitalized_file_name + '.' + fn_name + ")"
+        return "(" + fn_name + ")"
 
-    def create_function_return_to_label(self, fn_name):
+    def create_function_return_label_string(self, fn_name):
         print('counter dict', self.function_name_counter_dict)
-        dict_key = self.capitalized_file_name + '.' + fn_name
-        return "@" + self.capitalized_file_name + '.' + fn_name + ".$ret." + str(
-            self.function_name_counter_dict[dict_key])
+        return self.file_name + '.' + fn_name + ".$ret." + str(
+            self.function_name_counter(fn_name))
 
     def create_function_label(self, fn_name):
         return [self.create_function_entry_label_string(fn_name)]
@@ -204,7 +198,7 @@ class CodeWriter:
     def write_program_flow(self, operation, arg):
         code_to_write = []
         if operation == 'label':
-            code_to_write = self.create_label(arg)
+            code_to_write = ["(" + self.create_label(arg) + ")"]
         elif operation == 'if-goto':
             code_to_write = self.jump_conditional_if_goto_label(arg)
         elif operation == 'goto':
@@ -237,11 +231,27 @@ class CodeWriter:
                          restore_that + restore_this + restore_arg + restore_lcl + goto_saved_label)
 
     def create_function(self, fn_name, num_local_args):
+        self.current_function = fn_name
         code_to_write = self.create_function_label(fn_name) + self.create_n_vars(int(num_local_args))
         self.file_writer(code_to_write)
 
-    def create_call(self,arg1,arg2):
-        return None
+    def create_call(self, arg1, arg2):
+        select_nargs = '@' + arg2
+        return_label = self.create_function_return_label_string(arg1)
+        starting_call = ['//starting call']
+        push_return_address = ["@" + return_label, 'D=A',
+                               self.push_value_of_d_to_stack]
+        push_lcl = ['@LCL', self.push_value_of_d_to_stack]
+        push_arg = ['@ARG', self.push_value_of_d_to_stack]
+        push_this = ['@THIS', self.push_value_of_d_to_stack]
+        push_that = ['@THAT', self.push_value_of_d_to_stack]
+        reposition_arg = ['@5', 'D=A', self.SP, 'D=D-M', select_nargs, 'D=D-A', '@ARG', 'M=D']
+        reposition_lcl = [self.SP, 'D=M', '@LCL', 'M=D']
+        goto_f = ["@" + arg1, '0;JMP']
+        inject_return_address = ["(" + return_label + ")"]
+        code_to_write = (starting_call +push_return_address + push_lcl + push_arg + push_this +
+                         push_that + reposition_arg + reposition_lcl + goto_f + inject_return_address)
+        self.file_writer(code_to_write)
 
     def write_code_line(self, operation, arg1=None, arg2=None):
         print('OPERATION:', operation, 'arg', arg1, 'arg2', arg2)
@@ -259,4 +269,4 @@ class CodeWriter:
             self.create_return_function()
         elif operation == 'call':
             print('WRITING CALL', arg1, arg2)
-            self.create_call(arg1,arg2)
+            self.create_call(arg1, arg2)
