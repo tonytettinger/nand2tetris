@@ -41,7 +41,6 @@ class CodeWriter:
         self.current_function = None
 
     def clean_output_file(self):
-        print('cleaing', self.output_file)
         reset_file(self.output_file)
 
     def file_writer(self, code_to_write):
@@ -66,12 +65,10 @@ class CodeWriter:
             return [self.temp_dict[arg2], 'D=M', self.push_value_of_d_to_stack]
         if arg1 == 'constant':
             return ['@' + arg2, 'D=A', self.push_value_of_d_to_stack]
-        # if 'Static' in arg1:
-        #     return [arg1, 'D=A', self.push_value_of_d_to_stack]
         else:
             r_13_to_final_address = ['@' + arg2, 'D=A', self.address_dict[arg1], 'A=M', 'D=D+A', '@R13', 'M=D']
             set_final_address_to_arg2 = ['@R13', self.set_d_to_value_at_pointer, self.push_value_of_d_to_stack]
-            return ['//start command push' +arg1 +' with argument ' + arg2 ] + r_13_to_final_address + set_final_address_to_arg2
+            return r_13_to_final_address + set_final_address_to_arg2
 
     def get_pop_temp(self, arg2):
         return [self.pop_stack_pointer_value_to_d, self.temp_dict[arg2], 'M=D']
@@ -123,11 +120,11 @@ class CodeWriter:
         elif operation == 'neg':
             code_to_write = [self.SP, 'A=M-1', 'M=-M']
         elif operation == 'not':
-            code_to_write = ['//NOT section', self.SP, 'A=M-1', 'M=!M']
+            code_to_write = [self.SP, 'A=M-1', 'M=!M']
         elif operation == 'or':
             code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D | M']
         elif operation == 'and':
-            code_to_write = ['//Starting AND block', self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D & M']
+            code_to_write = [self.pop_stack_pointer_value_to_d, self.SP, 'A=M-1', 'M=D & M']
         self.file_writer(code_to_write)
 
     def pointer_target(self, argument_operation_number):
@@ -179,15 +176,9 @@ class CodeWriter:
 
     def function_name_counter(self, function_name):
         if function_name not in self.function_name_counter_dict:
-            print('Function name not found !!!!!!!!!!!!!!!!!!!!', function_name)
-            print('DICT', self.function_name_counter_dict)
             self.function_name_counter_dict[function_name] = 0
-            print('DICTAFTER', self.function_name_counter_dict)
         else:
             self.function_name_counter_dict[function_name] += 1
-            print('DICTAFTERFOUND', self.function_name_counter_dict)
-
-            print('FUNCTION FOUND XXXXXXXXXXXXXXXXXXXXXX')
         return self.function_name_counter_dict[function_name]
 
     def create_function_entry_label_string(self, fn_name):
@@ -245,9 +236,9 @@ class CodeWriter:
     def create_call(self, arg1, arg2):
         select_nargs = '@' + arg2
         return_label = self.create_function_return_label_string(arg1)
-        starting_call = ['//calling ' + arg1 + ' with argument ' + str(arg2)]
+        code_comment_starting_call = '      //calling ' + arg1 + ' with argument ' + str(arg2)
         push_return_address = ["@" + return_label, 'D=A',
-                               self.push_value_of_d_to_stack]
+                               self.push_value_of_d_to_stack + code_comment_starting_call]
         push_lcl = ['@LCL', 'D=M', self.push_value_of_d_to_stack]
         push_arg = ['@ARG', 'D=M', self.push_value_of_d_to_stack]
         push_this = ['@THIS', 'D=M', self.push_value_of_d_to_stack]
@@ -255,14 +246,13 @@ class CodeWriter:
         reposition_arg = ['@5', 'D=A', self.SP, 'D=M-D', select_nargs, 'D=D-A', '@ARG', 'M=D']
         reposition_lcl = [self.SP, 'D=M', '@LCL', 'M=D']
         goto_f = ["@" + arg1, '0;JMP']
-        inject_return_address = ["(" + return_label + ")"]
-        ending_call = ['//ending call ' + arg1 + ' with argument ' + str(arg2)]
-        code_to_write = (starting_call +push_return_address + push_lcl + push_arg + push_this +
-                         push_that + reposition_arg + reposition_lcl + goto_f + inject_return_address + ending_call)
+        code_comment_ending_call = '        //ending call ' + arg1 + ' with argument ' + str(arg2)
+        inject_return_address = ["(" + return_label + ")" + code_comment_ending_call]
+        code_to_write = (push_return_address + push_lcl + push_arg + push_this +
+                         push_that + reposition_arg + reposition_lcl + goto_f + inject_return_address)
         self.file_writer(code_to_write)
 
     def write_code_line(self, operation, arg1=None, arg2=None):
-        print('OPERATION:', operation, 'arg', arg1, 'arg2', arg2)
         if operation in self.arithmetic_operations:
             self.write_arithmetic(operation)
         elif operation in self.logical_operations:
@@ -276,5 +266,4 @@ class CodeWriter:
         elif operation == 'return':
             self.create_return_function()
         elif operation == 'call':
-            print('WRITING CALL', arg1, arg2)
             self.create_call(arg1, arg2)

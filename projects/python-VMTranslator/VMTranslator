@@ -71,7 +71,7 @@ if process_dir:
         with open(bootstrap_1_file_path, 'r') as source_file_1, \
                 open(bootstrap_2_file_path, 'r') as source_file_2, \
                 open(output_file, 'w') as destination_file:
-            destination_file.write(source_file_1.read() + source_file_2.read())
+            destination_file.write(source_file_1.read() + '\n' + source_file_2.read())
 
 
     except FileNotFoundError:
