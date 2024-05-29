@@ -60,14 +60,14 @@ class CodeWriter:
             else:
                 raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
         elif arg1 == 'static':
-            target = f'@{arg1.capitalize()}.{arg2}'
+            target = f'@{self.capitalized_file_name}.{arg2}'
             return [target, 'D=M', self.push_value_of_d_to_stack]
         if arg1 == 'temp':
             return [self.temp_dict[arg2], 'D=M', self.push_value_of_d_to_stack]
         if arg1 == 'constant':
             return ['@' + arg2, 'D=A', self.push_value_of_d_to_stack]
-        if 'Static' in arg1:
-            return [arg1, 'D=A', self.push_value_of_d_to_stack]
+        # if 'Static' in arg1:
+        #     return [arg1, 'D=A', self.push_value_of_d_to_stack]
         else:
             r_13_to_final_address = ['@' + arg2, 'D=A', self.address_dict[arg1], 'A=M', 'D=D+A', '@R13', 'M=D']
             set_final_address_to_arg2 = ['@R13', self.set_d_to_value_at_pointer, self.push_value_of_d_to_stack]
@@ -77,9 +77,9 @@ class CodeWriter:
         return [self.pop_stack_pointer_value_to_d, self.temp_dict[arg2], 'M=D']
 
     def get_pop_code_line(self, arg1, arg2):
-        address_to_write = arg1
-        if 'Static' not in arg1:
-            address_to_write = self.address_dict[arg1]
+        address_to_write = self.address_dict[arg1]
+        if 'static' == arg1:
+            address_to_write = '@' + self.capitalized_file_name + '.' + self.static_counter
         r_13_to_final_address = ['@' + arg2, 'D=A', address_to_write, 'A=M', 'D=D+A', '@R13', 'M=D']
         set_final_address_to_arg2 = [self.set_pointer_down, self.SP, self.set_d_to_value_at_pointer, '@R13', 'A=M',
                                      'M=D']
@@ -151,7 +151,7 @@ class CodeWriter:
                 else:
                     raise ValueError(f'{arg2} is not a valid number for pointer, should be either "1" or "0"')
             elif arg1 == 'static':
-                target = f'@{arg1.capitalize()}.{arg2}'
+                target = f'@{self.capitalized_file_name}.{arg2}'
                 code_to_write = [self.pop_stack_pointer_value_to_d, target, 'M=D']
                 self.static_counter += 1
                 if self.static_counter >= 240:
@@ -169,19 +169,25 @@ class CodeWriter:
 
     def jump_conditional_if_goto_label(self, label):
         label_address = '@' + self.create_label(label)
-        code_to_write = [self.pop_stack_pointer_value_to_d, '@1', 'D=D-A', label_address, 'D;JGE']
+        code_to_write = [self.pop_stack_pointer_value_to_d, label_address, 'D;JNE']
         return code_to_write
 
     def jump_goto_label(self, label):
-        label_address = '@' + str(label)
+        label_address = '@' + self.create_label(label)
         code_to_write = [label_address, '0;JMP']
         return code_to_write
 
     def function_name_counter(self, function_name):
         if function_name not in self.function_name_counter_dict:
+            print('Function name not found !!!!!!!!!!!!!!!!!!!!', function_name)
+            print('DICT', self.function_name_counter_dict)
             self.function_name_counter_dict[function_name] = 0
+            print('DICTAFTER', self.function_name_counter_dict)
         else:
             self.function_name_counter_dict[function_name] += 1
+            print('DICTAFTERFOUND', self.function_name_counter_dict)
+
+            print('FUNCTION FOUND XXXXXXXXXXXXXXXXXXXXXX')
         return self.function_name_counter_dict[function_name]
 
     def create_function_entry_label_string(self, fn_name):
@@ -189,8 +195,9 @@ class CodeWriter:
 
     def create_function_return_label_string(self, fn_name):
         print('counter dict', self.function_name_counter_dict)
-        return self.file_name + '.' + fn_name + ".$ret." + str(
-            self.function_name_counter(fn_name))
+        current_function_name = self.file_name + "." + fn_name + "$ret."
+        return current_function_name + str(
+            self.function_name_counter(current_function_name))
 
     def create_function_label(self, fn_name):
         return [self.create_function_entry_label_string(fn_name)]
@@ -220,7 +227,7 @@ class CodeWriter:
         # reposition return arg
         reposition_return_val = [self.pop_stack_pointer_value_to_d, '@ARG', 'A=M', 'M=D']
         # reposition SP
-        reposition_sp = ['//Return function', '@ARG', 'D=M', self.SP, 'M=D+1']
+        reposition_sp = ['@ARG', 'D=M', self.SP, 'M=D+1    //Return function']
         # restore caller state
         restore_that = ['@R13', 'D=M', '@1', 'D=D-A', 'A=D', 'D=M', '@THAT', 'M=D']
         restore_this = ['@R13', 'D=M', '@2', 'D=D-A', 'A=D', 'D=M', '@THIS', 'M=D']
@@ -238,19 +245,20 @@ class CodeWriter:
     def create_call(self, arg1, arg2):
         select_nargs = '@' + arg2
         return_label = self.create_function_return_label_string(arg1)
-        starting_call = ['//starting call']
+        starting_call = ['//calling ' + arg1 + ' with argument ' + str(arg2)]
         push_return_address = ["@" + return_label, 'D=A',
                                self.push_value_of_d_to_stack]
-        push_lcl = ['@LCL', self.push_value_of_d_to_stack]
-        push_arg = ['@ARG', self.push_value_of_d_to_stack]
-        push_this = ['@THIS', self.push_value_of_d_to_stack]
-        push_that = ['@THAT', self.push_value_of_d_to_stack]
-        reposition_arg = ['@5', 'D=A', self.SP, 'D=D-M', select_nargs, 'D=D-A', '@ARG', 'M=D']
+        push_lcl = ['@LCL', 'D=M', self.push_value_of_d_to_stack]
+        push_arg = ['@ARG', 'D=M', self.push_value_of_d_to_stack]
+        push_this = ['@THIS', 'D=M', self.push_value_of_d_to_stack]
+        push_that = ['@THAT', 'D=M', self.push_value_of_d_to_stack]
+        reposition_arg = ['@5', 'D=A', self.SP, 'D=M-D', select_nargs, 'D=D-A', '@ARG', 'M=D']
         reposition_lcl = [self.SP, 'D=M', '@LCL', 'M=D']
         goto_f = ["@" + arg1, '0;JMP']
         inject_return_address = ["(" + return_label + ")"]
+        ending_call = ['//ending call ' + arg1 + ' with argument ' + str(arg2)]
         code_to_write = (starting_call +push_return_address + push_lcl + push_arg + push_this +
-                         push_that + reposition_arg + reposition_lcl + goto_f + inject_return_address)
+                         push_that + reposition_arg + reposition_lcl + goto_f + inject_return_address + ending_call)
         self.file_writer(code_to_write)
 
     def write_code_line(self, operation, arg1=None, arg2=None):

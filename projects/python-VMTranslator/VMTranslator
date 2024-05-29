@@ -6,14 +6,17 @@ import os
 from parser import Parser
 from code_writer import CodeWriter
 
+
 def process_each_line(parserInstance, writerInstance):
     while parserInstance.advance():
         print(parserInstance.command_type, parserInstance.arg1, parserInstance.arg2)
         writerInstance.write_code_line(parserInstance.command_type, parserInstance.arg1, parserInstance.arg2)
 
+
 def reset_file(file_name):
     with open(file_name, "w"):
         pass
+
 
 process_dir = False
 
@@ -35,7 +38,6 @@ if len(sys.argv) == 2:
         print('workingdir is', sys.argv[1])
         directory = sys.argv[1]
         process_dir = True
-
 
 if len(sys.argv) != 2:
     directory = os.getcwd()
@@ -59,18 +61,19 @@ if process_dir:
     reset_file(output_file)
 
     script_directory = os.path.dirname(os.path.abspath(__file__))
-    bootstrap_file_name = 'bootstrap.asm'
-    file_path = os.path.join(script_directory, bootstrap_file_name)
-    print('FILE PATH IS', file_path)
-    #Read the contents of the source file and write them to the destination file
+    bootstrap_sys_call_file_name = 'bootstrap-sys-call.asm'
+    bootstrap_initial = 'bootstrap-initial.asm'
+
+    bootstrap_1_file_path = os.path.join(script_directory, bootstrap_initial)
+    bootstrap_2_file_path = os.path.join(script_directory, bootstrap_sys_call_file_name)
+    # Read the contents of the source file and write them to the destination file
     try:
-        with open(file_path, 'r') as source_file:
-            contents = source_file.read()
+        with open(bootstrap_1_file_path, 'r') as source_file_1, \
+                open(bootstrap_2_file_path, 'r') as source_file_2, \
+                open(output_file, 'w') as destination_file:
+            destination_file.write(source_file_1.read() + source_file_2.read())
 
-        with open(output_file, 'w') as destination_file:
-            destination_file.write(contents)
 
-        print(f"Contents of '{bootstrap_file_name}' have been written to '{output_file}'")
     except FileNotFoundError:
         print(f"Error: File not found.")
     except IOError as e:
@@ -92,7 +95,3 @@ if process_dir:
             parserInstance = Parser(file_name)
             writerInstance = CodeWriter(file_name_without_extension, output_file)
             process_each_line(parserInstance, writerInstance)
-
-
-
-
