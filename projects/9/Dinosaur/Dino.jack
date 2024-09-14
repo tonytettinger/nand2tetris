@@ -1,0 +1,84 @@
+class Dino {
+  field int x, y, size, rightEdge, bottomEdge, currentY, currentYBottom, 
+  moveInterval, maxMoveInterval, distanceFromGround,
+  initialVelocity;
+  field ScrLimits scrLimits;
+  field boolean inAir;
+  constructor Dino new(int ax, int ay) {
+    let x = ax;
+    let y = ay;
+    let size = 40;
+    let inAir = true;
+    let moveInterval = 1;
+    let maxMoveInterval = 100;
+    let distanceFromGround = 0;
+    let initialVelocity = 20;
+    let scrLimits = ScrLimits.new();
+    let rightEdge = scrLimits.screenRight();
+    let bottomEdge = scrLimits.screenBottom()-5;
+    let currentY = bottomEdge-size;
+    let currentYBottom = bottomEdge;
+    do draw();
+    return this;
+  }
+
+  method void dispose(){
+    do Memory.dealloc(this);
+    return;
+  }
+
+  method void draw(){
+    do Screen.setColor(true);
+    do Screen.drawRectangle(0, currentY, size, currentYBottom);
+    return;
+  }
+
+   method void moveUp() {
+         // Erases the bottom two rows of this square in its current location
+         do Screen.setColor(false);
+         do Screen.drawRectangle(0, currentYBottom - 1, size, currentYBottom+1);
+         // Draws the top two rows of this square in its new location
+         do Screen.setColor(true);
+         do Screen.drawRectangle(0, currentY-1, size, currentY);
+      return;
+   }
+
+      method void moveDown() {
+         // Erases the top row of this square in its current location
+         do Screen.setColor(false);
+         do Screen.drawRectangle(0, currentY-1, size, currentY+1);
+         // Draws the bottom row of this square in its new location
+         do Screen.setColor(true);
+         do Screen.drawRectangle(0, currentYBottom-1, size, currentYBottom);
+      return;
+   }
+
+  method void jump(){
+    var int heightCount, movementSpeed;
+    let heightCount = 0;
+    let movementSpeed = 1;
+    while(inAir & (maxMoveInterval > heightCount)) {
+      do moveUp();
+      do Sys.wait(movementSpeed);
+      let currentY = currentY - 1;
+      let currentYBottom = currentYBottom -1;
+      let heightCount = heightCount + 1;
+      if(movementSpeed < 6){
+      let movementSpeed = movementSpeed + 1;
+      }
+    }
+    let movementSpeed = 20;
+    while(inAir & (heightCount > 0)) {
+      do moveDown();
+      do Sys.wait(movementSpeed);
+      let currentY = currentY + 1;
+      let currentYBottom = currentYBottom +1;
+      let heightCount = heightCount - 1;
+      if(movementSpeed > 8){
+      let movementSpeed = movementSpeed -1;
+      }
+    }
+    return;
+  }
+
+}

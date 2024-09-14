@@ -1,0 +1,15 @@
+class ScrLimits {
+    field int screenBottom, screenRight;
+
+  constructor ScrLimits new(){
+    let screenBottom = 255;
+    let screenRight = 511;
+    return this;
+  }
+  method int screenBottom(){
+    return screenBottom;
+  }
+  method int screenRight(){
+    return screenRight;
+  }
+}

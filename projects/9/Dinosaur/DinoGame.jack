@@ -1,0 +1,39 @@
+class DinoGame {
+  field Dino dino;
+  field Cactus cactus;
+  field array cactusArray;
+  field int score;
+  constructor DinoGame new() {
+    let dino = Dino.new(0, 0);
+    let cactus = Cactus.new();
+    let score = 0;
+    do dino.draw();
+    do Output.moveCursor(22,7);
+    do Output.printInt(score);
+    do cactus.draw();
+    return this;
+  }
+
+  method void run(){
+    var char key;
+    while(true) {
+    let key = Keyboard.keyPressed();
+    if(key = 131){
+    do dino.jump();
+    let score = score + 1;
+    do Output.moveCursor(22,7);
+    do Output.printInt(score);
+    }
+  }
+  return;
+  }
+
+
+
+     /** Disposes this game. */
+   method void dispose() {
+      do dino.dispose();
+      do Memory.deAlloc(this);
+      return;
+   }
+}

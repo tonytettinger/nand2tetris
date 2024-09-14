@@ -1,0 +1,46 @@
+class Cactus {
+  field int height, width, rightEdge, bottomEdge, initialPos, xPos, yPos;
+  field ScrLimits limits;
+
+  constructor Cactus new() {
+    let height = 20;
+    let width = 5;
+    let limits = ScrLimits.new();
+    let rightEdge = limits.screenRight()-5;
+    let bottomEdge = limits.screenBottom()-5;
+    let xPos = rightEdge-10;
+    let yPos = bottomEdge - height;
+    return this;
+  }
+
+  method void draw() {
+    do Screen.drawRectangle(xPos, yPos, xPos+width, bottomEdge);
+    return;
+  }
+
+  method void moveLeft(){
+         // Erases the right column of this square in its current location
+         do Screen.setColor(false);
+         do Screen.drawRectangle(xPos+width-1, yPos, xPos+width+1, bottomEdge);
+         do Screen.setColor(true);
+         do Screen.drawRectangle(xPos-1, yPos, xPos, bottomEdge);
+        let xPos = xPos-1;
+      return;
+  }
+  
+  method void disappearLeft() {
+     // Erases the right column of this square in its current location
+         do Screen.setColor(false);
+         do Screen.drawRectangle(xPos+width-1, yPos, xPos+width+1, bottomEdge);
+        return;
+  }
+
+  method void moveCactus(){
+    while(xPos>6) {
+      let xPos = xPos-1;
+      do Sys.wait(10);
+      do moveLeft();
+    }
+    return;
+  }
+}
